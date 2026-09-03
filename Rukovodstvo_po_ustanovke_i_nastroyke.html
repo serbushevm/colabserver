@@ -1,0 +1,1008 @@
+<h1 style="font-size: 14pt; color: rgb(163, 97, 31); font-family: tahoma, arial, sans-serif;">
+	Настройка 1С:Сервера взаимодействия с медиасервером Janus - для 30.0.42</h1>
+<p style="font-size: 18px; color: rgb(85, 85, 85); margin-bottom: 4px;">
+	Установка и первичная настройка серверных компонентов</p>
+<div style="background-color:#FFF; border:1px solid #FFD700; border-left:5px solid #FFD700; padding:12px 16px; margin:12px 0; color:#856404;">
+	<strong>Важно.</strong> Данный документ содержит тестовые учётные данные. Перед вводом системы в промышленную эксплуатацию замените все логины и пароли на безопасные значения.</div>
+<h1 style="font-size:22px; color:#000; margin-top:36px;">
+	Общие сведения</h1>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	Состав разворачиваемых компонентов</h2>
+<p>
+	В ходе установки разворачиваются следующие программные компоненты:</p>
+<table style="border-collapse:collapse; width:100%; margin:12px 0;">
+	<tbody>
+		<tr>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Компонент</th>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Назначение</th>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Java 11 (AxiomJDK)</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Среда выполнения Java-компонентов</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Hazelcast</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Распределённый кэш и координация</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Elasticsearch</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Полнотекстовый поиск</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Ring / CS</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Основной сервер взаимодействия</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				PostgreSQL 15</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Реляционная СУБД</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				MinIO (S3)</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Объектное хранилище файлов</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Janus</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Медиасервер видеоконференций</td>
+		</tr>
+	</tbody>
+</table>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	Используемые сетевые порты</h2>
+<p>
+	Убедитесь, что указанные порты открыты в межсетевом экране.</p>
+<table style="border-collapse:collapse; width:100%; margin:12px 0;">
+	<tbody>
+		<tr>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Компонент</th>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Порт</th>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Протокол / Назначение</th>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Hazelcast</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				5701</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				TCP / Кластерное взаимодействие</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Elasticsearch</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				9200, 9300</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				TCP / REST API, транспорт</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				CS (WebSocket)</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				8086</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				TCP / Подключения клиентов</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				CS (Admin REST)</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				8087</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				TCP / Административный API</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				CS (HTTPS)</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				8443, 8444</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				TCP / Защищённое подключение</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				PostgreSQL</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				5432</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				TCP / СУБД</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				MinIO</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				9000</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				TCP / S3 API</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Janus (HTTP API)</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				8188</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				TCP / Управление медиасервером</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Janus (локальный)</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				7188</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				TCP / Внутренний API</td>
+		</tr>
+	</tbody>
+</table>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	Требования безопасности</h2>
+<div style="background-color:#FFF; border:1px solid #FFD700; border-left:5px solid #FFD700; padding:12px 16px; margin:12px 0; color:#856404;">
+	<strong>Внимание.</strong> Для безопасной эксплуатации системы необходимо:
+	<ul style="margin:6px 0 6px 20px;">
+		<li>
+			заменить все тестовые логины и пароли на надёжные значения;</li>
+		<li>
+			настроить HTTPS-доступ (обратный прокси-сервер, TLS-сертификаты);</li>
+		<li>
+			вынести СУБД и объектное хранилище на отдельные серверы;</li>
+		<li>
+			ограничить сетевой доступ к служебным портам (межсетевой экран, ACL).</li>
+	</ul>
+</div>
+<h1 style="font-size:22px; color:#000; margin-top:36px;">
+	1. Установка Java 11 (AxiomJDK)</h1>
+<p>
+	Установка среды выполнения Java 11 необходима для работы Java-компонентов Системы взаимодействия (Hazelcast, Elasticsearch, CS).</p>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<strong style="color:#555;">Шаг 1.</strong> Установите пакет AxiomJDK:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+rpm -i axiomjdk-jre-pro11.0.28+12-linux-amd64.rpm</pre>
+<p>
+	<strong style="color:#555;">Шаг 2.</strong> Определите путь к установленной Java:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+readlink $(readlink $(which java))</pre>
+<p>
+	Ожидаемый результат:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+/usr/lib/jvm/axiomjdk-java11-pro-runtime.x86_64/bin/java</pre>
+<p>
+	<strong style="color:#555;">Шаг 3.</strong> Создайте профиль окружения для переменной JAVA_HOME:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+tee /etc/profile.d/java.sh &lt;&lt; &#39;EOF&#39;
+export JAVA_HOME=/usr/lib/jvm/axiomjdk-java11-pro-runtime.x86_64
+export PATH=$JAVA_HOME/bin:$PATH
+EOF
+
+chmod +x /etc/profile.d/java.sh
+source /etc/profile.d/java.sh</pre>
+<p>
+	<strong style="color:#555;">Шаг 4.</strong> Добавление сертификатов от Минцифры:</p>
+
+По ссылке <a href="https://www.gosuslugi.ru/crt">https://www.gosuslugi.ru/crt</a> скачать корневой и выпускающий сертификаты
+Для работы интеграции МАКС необходимо добавить сертификаты от Минцифры в jdk keystore:
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+- распаковать архивы
+- открыть консоль от имени администратора
+- с помощью утилиты keytool добавить сертификаты в keystore
+примеры команды для добавления сертификатов:
+
+keytool -import -file russian_trusted_root_ca.cer -keystore "%JAVA_HOME%\lib\security\cacerts" -alias "russian-root-ca"
+keytool -import -file russian_trusted_sub_ca.cer -keystore "%JAVA_HOME%\lib\security\cacerts" -alias "russian-sub-ca"
+- чтобы проверить, что сертификаты успешно добавлены нужно выполнить команду
+
+keytool -list -v -keystore "%JAVA_HOME%\lib\security\cacerts" | findstr /i "Russian"
+после чего в выводе команды должны быть указаны добавленные сертификаты
+при выполнении команд keytool, необходимо указать пароль, если Вы его не меняли по умолчанию пароль - changeit</pre>
+<p>
+	<strong style="color:#555;">Шаг 5.</strong> Перезагрузите сервер:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+reboot</pre>
+
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Java 11 установлена. Переменная JAVA_HOME доступна во всех сессиях ОС.</div>
+<h1 style="font-size:22px; color:#000; margin-top:36px;">
+	2. Установка ECS (компоненты Системы взаимодействия)</h1>
+<p>
+	На данном этапе устанавливается дистрибутив ECS, включающий утилиту ring и базовые компоненты: Hazelcast, Elasticsearch, CS.</p>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<strong style="color:#555;">Шаг 1.</strong> Распакуйте архив дистрибутива:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+tar -xzf 1c-cs-30.0.42-linux-x86_64.tar.gz</pre>
+<p>
+	<strong style="color:#555;">Шаг 2.</strong> Перейдите в каталог дистрибутива и запустите установку:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+./1ce-installer-cli install --ignore-signature-warnings</pre>
+<p>
+	Ожидаемое сообщение:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+Установка продукта завершена успешно.</pre>
+<div style="background-color:#FFF; border:1px solid #FFD700; border-left:5px solid #FFD700; padding:12px 16px; margin:12px 0; color:#856404;">
+	<strong>Внимание: SELinux.</strong> Текущая версия инсталлятора не поддерживает SELinux в режиме enforcing. Переведите SELinux в режим permissive:
+	<pre style="background-color:#FFF; border:1px solid #FFD700; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5;">
+sed -i &#39;s/^SELINUX=.*/SELINUX=permissive/&#39; /etc/selinux/config
+reboot</pre>
+</div>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Компоненты ECS установлены. ОС подготовлена для запуска сервисов.</div>
+<h1 style="font-size:22px; color:#000; margin-top:36px;">
+	3. Установка PostgreSQL 15</h1>
+<p>
+	PostgreSQL используется для хранения данных Системы взаимодействия.</p>
+<div style="background-color:#FFF; border:1px solid #4CAF50; border-left:5px solid #4CAF50; padding:12px 16px; margin:12px 0; color:#2E7D32;">
+	<strong>Примечание.</strong> Если PostgreSQL 15 уже установлен и запущен, перейдите к разделу 4.4.</div>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<strong style="color:#555;">Шаг 1.</strong> Получите серверные пакеты для установки. Сборку PostgreSQL с патчем от 1С можно получить с ресурса <a href="https://releases.1c.ru/project/AddCompPostgre">https://releases.1c.ru/project/AddCompPostgre</a></p>
+<p>
+	<strong style="color:#555;">Шаг 2.</strong> Установите серверные пакеты:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+yum update -y
+yum install -y bzip2
+mkdir -p &quot;/tmp/postgresql-distrib-1c&quot;
+tar --extract --directory &quot;/tmp/postgresql-distrib-1c&quot; --file ./postgresql-15.15-1-centos-7-x86_64-package.tar.bz2
+yum install -y \
+  /tmp/postgresql-distrib-1c/postgresql15-15.15-1.1C.x86_64.rpm \
+  /tmp/postgresql-distrib-1c/postgresql15-contrib-15.15-1.1C.x86_64.rpm \
+  /tmp/postgresql-distrib-1c/postgresql15-libs-15.15-1.1C.x86_64.rpm \
+  /tmp/postgresql-distrib-1c/postgresql15-server-15.15-1.1C.x86_64.rpm</pre>
+<p>
+	Команды для установки в вашей ОС опубликованы в файле &laquo;Поддерживаемые операционные системы и команды для установки дистрибутива&raquo;.</p>
+<p>
+	<strong style="color:#555;">Шаг 3.</strong> Инициализируйте кластер:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+postgresql-15-setup initdb</pre>
+<p>
+	<strong style="color:#555;">Шаг 4.</strong> Включите автозапуск и запустите сервис:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+systemctl enable postgresql-15.service --now</pre>
+<p>
+	<strong style="color:#555;">Шаг 5.</strong> Убедитесь, что PostgreSQL принимает подключения на порту 5432:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+lsof -iTCP -sTCP:LISTEN -P | grep postgres</pre>
+<p>
+	Ожидаемый результат:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+postmaste 6572 postgres 6u IPv6 50128 0t0 TCP localhost:5432 (LISTEN)
+postmaste 6572 postgres 7u IPv4 50129 0t0 TCP localhost:5432 (LISTEN)</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> PostgreSQL 15 установлен и запущен.</div>
+<h1 style="font-size:22px; color:#000; margin-top:36px;">
+	4. Базовая конфигурация компонентов 1С:Сервера системы взаимодействия (ECS)</h1>
+<p>
+	На данном этапе создаются экземпляры компонентов, настраивается подключение к PostgreSQL и параметры WebSocket.</p>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	4.1. Создание экземпляра Hazelcast</h2>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<strong style="color:#555;">Шаг 1.</strong> Создайте пользователя и каталог:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+useradd hc_user
+mkdir -p /var/cs/hc_instance
+chown hc_user:hc_user /var/cs/hc_instance</pre>
+<p>
+	<strong style="color:#555;">Шаг 2.</strong> Создайте экземпляр:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring hazelcast instance create \
+  --dir /var/cs/hc_instance \
+  --owner hc_user</pre>
+<p>
+	<strong style="color:#555;">Шаг 3.</strong> Создайте systemd-сервис:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring hazelcast --instance hc_instance service create \
+  --username hc_user \
+  --java-home $JAVA_HOME \
+  --stopped</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Экземпляр Hazelcast и systemd-сервис созданы.</div>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	4.2. Создание экземпляра Elasticsearch</h2>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<strong style="color:#555;">Шаг 1.</strong> Создайте пользователя и каталог:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+useradd es_user
+mkdir -p /var/cs/es_instance
+chown es_user:es_user /var/cs/es_instance</pre>
+<p>
+	<strong style="color:#555;">Шаг 2.</strong> Создайте экземпляр:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring elasticsearch instance create \
+  --dir /var/cs/es_instance \
+  --owner es_user</pre>
+<p>
+	<strong style="color:#555;">Шаг 3.</strong> Создайте сервис:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring elasticsearch --instance es_instance service create \
+  --username es_user \
+  --java-home $JAVA_HOME \
+  --stopped</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Экземпляр Elasticsearch и сервис управления созданы.</div>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	4.3. Создание экземпляра CS</h2>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<strong style="color:#555;">Шаг 1.</strong> Создайте пользователя и каталог:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+useradd cs_user
+mkdir -p /var/cs/cs_instance
+chown cs_user:cs_user /var/cs/cs_instance</pre>
+<p>
+	<strong style="color:#555;">Шаг 2.</strong> Создайте экземпляр CS:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring cs instance create \
+  --dir /var/cs/cs_instance \
+  --owner cs_user</pre>
+<p>
+	<strong style="color:#555;">Шаг 3.</strong> Создайте сервис:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring cs --instance cs_instance service create \
+  --username cs_user \
+  --java-home $JAVA_HOME \
+  --stopped</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Экземпляр CS и сервис управления созданы.</div>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	4.4. Подготовка базы данных PostgreSQL</h2>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<strong style="color:#555;">Шаг 1.</strong> Перейдите в сессию postgres и запустите psql:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+su - postgres
+psql</pre>
+<p>
+	<strong style="color:#555;">Шаг 2.</strong> Создайте пользователя, базу данных и расширение:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+CREATE USER db_user WITH PASSWORD &#39;db_user_pwd&#39; CREATEDB;
+CREATE DATABASE cs_db OWNER db_user;
+\c cs_db;
+CREATE EXTENSION IF NOT EXISTS &quot;uuid-ossp&quot;;</pre>
+<p>
+	<strong style="color:#555;">Шаг 3.</strong> Завершите работу:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+\q
+exit</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Пользователь db_user и база данных cs_db созданы. Расширение uuid-ossp установлено.</div>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	4.5. Привязка CS к PostgreSQL (JDBC-пулы)</h2>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	Настройте параметры пула common:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring cs --instance cs_instance jdbc pools --name common set-params \
+  --url &quot;jdbc:postgresql://localhost:5432/cs_db?currentSchema=public&quot;
+ring cs --instance cs_instance jdbc pools --name common set-params --username db_user
+ring cs --instance cs_instance jdbc pools --name common set-params --password db_user_pwd</pre>
+<p>
+	Настройте параметры пула privileged:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring cs --instance cs_instance jdbc pools --name privileged set-params \
+  --url &quot;jdbc:postgresql://localhost:5432/cs_db?currentSchema=public&quot;
+ring cs --instance cs_instance jdbc pools --name privileged set-params --username db_user
+ring cs --instance cs_instance jdbc pools --name privileged set-params --password db_user_pwd</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> CS настроен на работу с PostgreSQL через JDBC-пулы common и privileged.</div>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	4.6. Параметры WebSocket CS</h2>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring cs --instance cs_instance websocket set-params --hostname 0.0.0.0
+ring cs --instance cs_instance websocket set-params --port 8086</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> WebSocket endpoint CS настроен на прослушивание 0.0.0.0:8086.</div>
+<h1 style="font-size:22px; color:#000; margin-top:36px;">
+	5. Запуск сервисов и проверка</h1>
+<p>
+	После создания экземпляров необходимо запустить все сервисы и проверить доступность портов.</p>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	5.1. Запуск Hazelcast</h2>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring hazelcast --instance hc_instance service start</pre>
+<p>
+	Проверка:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+lsof -iTCP -sTCP:LISTEN -P | grep hc_user</pre>
+<p>
+	Ожидаемый результат (порт 5701):</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+launcher 867 hc_user 17u IPv6 23694 0t0 TCP *:5701 (LISTEN)</pre>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	5.2. Запуск Elasticsearch</h2>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring elasticsearch --instance es_instance service start</pre>
+<p>
+	Проверка:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+lsof -iTCP -sTCP:LISTEN -P | grep es_user</pre>
+<p>
+	Ожидаемый результат (порты 9200, 9300):</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+launcher 866 es_user 162u IPv6 27828 0t0 TCP localhost:9200 (LISTEN)
+launcher 866 es_user 135u IPv6 24300 0t0 TCP localhost:9300 (LISTEN)</pre>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	5.3. Запуск CS</h2>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring cs --instance cs_instance service start</pre>
+<p>
+	Проверка:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+lsof -iTCP -sTCP:LISTEN -P | grep cs_user</pre>
+<p>
+	Ожидаемый результат (порты 8086, 8443, 8444):</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+launcher 2915 cs_user 482u IPv6 38441 0t0 TCP *:8086 (LISTEN)
+launcher 2915 cs_user 370u IPv6 38348 0t0 TCP *:8443 (LISTEN)
+launcher 2915 cs_user 375u IPv6 38352 0t0 TCP localhost:8444 (LISTEN)</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Все основные сервисы запущены и прослушивают назначенные порты.</div>
+<div style="background-color:#FFFFF0; border:1px solid #FFD700; border-left:5px solid #FFD700; padding:12px 16px; margin:12px 0; color:#856404;">
+	<strong style="">Примечание (SELinux).</strong> <span style="">При запуске сервисов командой <code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">ring &hellip; service start</code> в режиме SELinux permissive через несколько секунд могут появляться уведомления от SELinux (например, типа <code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">open</code>, <code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">read</code>, <code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">unlink</code>). Эти сообщения носят информационный характер, на работу сервисов не влияют и могут быть проигнорированы.</span></div>
+<h1 style="font-size:22px; color:#000; margin-top:36px;">
+	6. Инициализация базы данных (REST API)</h1>
+<p>
+	Регистрация основной базы данных в сервере взаимодействия выполняется через административный REST API.</p>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+curl -Sf -X POST -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{
+    &quot;url&quot;: &quot;jdbc:postgresql://localhost:5432/cs_db&quot;,
+    &quot;username&quot;: &quot;db_user&quot;,
+    &quot;password&quot;: &quot;db_user_pwd&quot;,
+    &quot;enabled&quot;: true
+  }&#39; \
+  -u admin:admin http://localhost:8087/admin/bucket_server</pre>
+<p>
+	Ожидаемый результат &mdash; JSON-ответ с параметрами зарегистрированной БД:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+{&quot;id&quot;:&quot;1d17a146-...&quot;,&quot;url&quot;:&quot;jdbc:postgresql://localhost:5432/cs_db&quot;,
+ &quot;username&quot;:&quot;db_user&quot;,&quot;enabled&quot;:true,&quot;deleted&quot;:false}</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> База данных зарегистрирована в сервере взаимодействия.</div>
+<h1 style="font-size:22px; color:#000; margin-top:36px;">
+	7. Настройка TURN/STUN сервера</h1>
+<p>
+	ICE-сервер (TURN/STUN) необходим для обеспечения медиасоединений через NAT и межсетевые экраны.</p>
+<table style="border-collapse:collapse; width:100%; margin:12px 0;">
+	<tbody>
+		<tr>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Вариант</th>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Описание</th>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Собственный coturn</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Рекомендуется для промышленной эксплуатации. См. <a href="https://github.com/coturn/coturn">https://github.com/coturn/coturn</a></td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Тестовый сервер 1С</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Для целей отладки и тестирования.</td>
+		</tr>
+	</tbody>
+</table>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Пример регистрации тестового сервера 1С</h3>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+curl -Sf -X POST -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{
+    &quot;url&quot;: &quot;turn:stun-test.1cdialog.com:3478&quot;,
+    &quot;username&quot;: &quot;video_module&quot;,
+    &quot;password&quot;: &quot;SamplePassword&quot;,
+    &quot;enabled&quot;: true
+  }&#39; \
+  -u admin:admin http://localhost:8087/admin/bucket_server</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> TURN/STUN сервер зарегистрирован.</div>
+<h1 style="font-size:22px; color:#000; margin-top:36px;">
+	8. Проверка общей работоспособности</h1>
+<p>
+	Для проверки состояния всех компонентов используется эндпоинт /rs/health.</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+curl http://localhost:8087/rs/health</pre>
+<p>
+	Пример ответа (до регистрации медиасервера):</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+{
+  &quot;status&quot;: &quot;UP&quot;,
+  &quot;mainDbOk&quot;: true,
+  &quot;allShardsOk&quot;: true,
+  &quot;hazelcast&quot;: {&quot;available&quot;: true, &quot;members&quot;: [&quot;127.0.0.1:5701&quot;]},
+  &quot;elasticsearchOk&quot;: true,
+  &quot;mediaClusterOk&quot;: false,
+  &quot;pushOk&quot;: false
+}</pre>
+<table style="border-collapse:collapse; width:100%; margin:12px 0;">
+	<tbody>
+		<tr>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Параметр</th>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Ожидаемое значение</th>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Описание</th>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				status</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				UP</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Общий статус системы</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				mainDbOk</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				true</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Подключение к основной БД</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				allShardsOk</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				true</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Все шарды БД доступны</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				hazelcast.available</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				true</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Кластер Hazelcast активен</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				elasticsearchOk</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				true</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Elasticsearch доступен</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				mediaClusterOk</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				false / true</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Медиасервер (до / после раздела 10)</td>
+		</tr>
+	</tbody>
+</table>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Состояние сервера взаимодействия проверено.</div>
+<h1 style="font-size:22px; color:#000; margin-top:36px;">
+	9. Объектное хранилище S3 (MinIO)</h1>
+<p>
+	MinIO обеспечивает S3-совместимое хранилище для файлов Системы взаимодействия.</p>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	9.1. Установка MinIO</h2>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<strong style="color:#555;">Шаг 1.</strong> Создайте пользователя и каталоги:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+useradd minio_user
+mkdir -p /opt/minio /var/minio
+chown -R minio_user:minio_user /opt/minio /var/minio</pre>
+<p>
+	<strong style="color:#555;">Шаг 2.</strong> Скачайте и установите MinIO:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+cd /opt/minio
+wget https://dl.min.io/server/minio/release/linux-amd64/minio
+chmod +x minio</pre>
+<p>
+	<strong style="color:#555;">Шаг 3.</strong> Создайте файл параметров окружения:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+tee /etc/default/minio &lt;&lt; &#39;EOF&#39;
+MINIO_VOLUMES=&quot;/var/minio/&quot;
+MINIO_ROOT_USER=minio
+MINIO_ROOT_PASSWORD=minio123
+EOF</pre>
+<p>
+	<strong style="color:#555;">Шаг 4.</strong> Создайте systemd unit-файл:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+tee /etc/systemd/system/minio.service &lt;&lt; &#39;EOF&#39;
+[Unit]
+Description=MinIO
+Documentation=https://docs.min.io
+Wants=network-online.target
+After=network-online.target
+AssertFileIsExecutable=/opt/minio/minio
+
+[Service]
+WorkingDirectory=/usr/local/
+User=minio_user
+Group=minio_user
+EnvironmentFile=/etc/default/minio
+ExecStartPre=/bin/bash -c &quot;if [ -z \&quot;${MINIO_VOLUMES}\&quot; ]; then echo \&quot;Variable MINIO_VOLUMES not set\&quot;; exit 1; fi&quot;
+ExecStart=/opt/minio/minio server $MINIO_OPTS $MINIO_VOLUMES
+Restart=always
+LimitNOFILE=65536
+TimeoutStopSec=infinity
+SendSIGKILL=no
+
+[Install]
+WantedBy=multi-user.target
+EOF</pre>
+<div style="background-color:#FFFFF0; border:1px solid #FFD700; border-left:5px solid #FFD700; padding:12px 16px; margin:12px 0; color:#856404;">
+	<strong style="">Важно.</strong> <span style="">Параметр <code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">LimitNOFILE=65536</code> необходим для корректной работы звонков с большим числом участников. Если его не указать, такие звонки будут аварийно завершаться.</span></div>
+<p>
+	<strong style="color:#555;">Шаг 5.</strong> Запустите сервис:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+systemctl enable minio.service
+systemctl start minio.service
+journalctl -efu minio</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> MinIO установлен и запущен.</div>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	9.2. Создание бакетов в MinIO</h2>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<strong style="color:#555;">Шаг 1.</strong> Откройте веб-интерфейс MinIO по адресу из журнала.</p>
+<p>
+	<strong style="color:#555;">Шаг 2.</strong> Выполните вход (логин/пароль из /etc/default/minio).</p>
+<p>
+	<strong style="color:#555;">Шаг 3.</strong> Создайте бакет с именем cs-bucket.</p>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Бакет cs-bucket создан.</div>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	9.3. Регистрация хранилища в ECS</h2>
+<div style="background-color:#FFF; border:1px solid #FFD700; border-left:5px solid #FFD700; padding:12px 16px; margin:12px 0; color:#856404;">
+	<strong>Внимание.</strong> В параметрах baseUrl и containerUrl нельзя использовать localhost, если клиенты подключаются извне. Укажите внешний IP-адрес или доменное имя хоста MinIO.</div>
+<p>
+	При необходимости замените localhost на внешний адрес сервера MinIO:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+curl -Sf -X POST -H &#39;Content-Type: application/json&#39; \
+  -d &#39;{
+    &quot;apiType&quot;: &quot;AMAZON&quot;,
+    &quot;storageType&quot;: &quot;DEFAULT&quot;,
+    &quot;baseUrl&quot;: &quot;http://localhost:9000&quot;,
+    &quot;containerUrl&quot;: &quot;http://localhost:9000/cs-bucket&quot;,
+    &quot;containerName&quot;: &quot;cs-bucket&quot;,
+    &quot;region&quot;: &quot;eu-west-1&quot;,
+    &quot;accessKeyId&quot;: &quot;minio&quot;,
+    &quot;secretKey&quot;: &quot;minio123&quot;,
+    &quot;signatureVersion&quot;: &quot;V2&quot;,
+    &quot;uploadLimit&quot;: 1073741824,
+    &quot;downloadLimit&quot;: 1073741824,
+    &quot;fileSizeLimit&quot;: 1073741824,
+    &quot;bytesToKeep&quot;: 0,
+    &quot;daysToKeep&quot;: 31,
+    &quot;pathStyleAccessEnabled&quot;: true
+  }&#39; \
+  -u admin:admin http://localhost:8087/admin/storage_server</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> S3-хранилище зарегистрировано в сервере взаимодействия.</div>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	9.4. Регистрация в информационной базе 1С:Предприятие</h2>
+<p>
+	Для связи сервера взаимодействия с информационной базой используется обработка CollaborationSystemRegister.epf.</p>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<strong style="color:#555;">Шаг 1.</strong> <span style="">Найдите обработку <code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">CollaborationSystemRegister.epf</code> в составе дистрибутива сервера взаимодействия (поставляется вместе с установщиком).</span></p>
+<p>
+	<strong style="color:#555;">Шаг 2.</strong> В клиенте 1С:Предприятие: <strong>Файл &rarr; Открыть &rarr; CollaborationSystemRegister.epf</strong>.</p>
+<p>
+	<strong style="color:#555;">Шаг 3.</strong> Заполните поля формы:</p>
+<table style="border-collapse:collapse; width:100%; margin:12px 0;">
+	<tbody>
+		<tr>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Поле</th>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Значение</th>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Адрес сервера взаимодействия</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				ws://&lt;внешний-IP&gt;:8086</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Адрес электронной почты абонента</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				&lt;произвольный&gt;</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Имя информационной базы</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				&lt;произвольное&gt;</td>
+		</tr>
+	</tbody>
+</table>
+<p>
+	<strong style="color:#555;">Шаг 4.</strong> Нажмите кнопку <strong>Зарегистрировать</strong>.</p>
+<div style="background-color:#FFF; border:1px solid #4CAF50; border-left:5px solid #4CAF50; padding:12px 16px; margin:12px 0; color:#2E7D32;">
+	<strong>Примечание.</strong> В случае ошибки проверьте:
+	<ul style="margin:6px 0 6px 20px;">
+		<li>
+			корректность регистрации S3-хранилища (раздел 9.3);</li>
+		<li>
+			доступность порта 8086 с клиентского компьютера.</li>
+	</ul>
+</div>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Информационная база зарегистрирована на сервере взаимодействия.</div>
+<h1 style="font-size:22px; color:#000; margin-top:36px;">
+	10. Медиасервер Janus</h1>
+<p>
+	Janus обеспечивает работу видеоконференций в Системе взаимодействия.</p>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	10.1. Установка Janus</h2>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<strong style="color:#555;">Шаг 1.</strong> Распакуйте дистрибутив janus-amd64-1.0.4.25.</p>
+<p>
+	<strong style="color:#555;">Шаг 2.</strong> Ознакомьтесь с README.md.</p>
+<p>
+	<strong style="color:#555;">Шаг 3.</strong> Запустите установку:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+./install.sh</pre>
+<div style="background-color:#FFF; border:1px solid #4CAF50; border-left:5px solid #4CAF50; padding:12px 16px; margin:12px 0; color:#2E7D32;">
+	<strong>Примечание.</strong> По умолчанию Janus запускается под пользователем 1c_media. Под этим же пользователем работают сервисы videoutils (1ce_audiomixer, 1ce_videomixer, 1ce_recordsmonitor). Janus и 1ce_recordsmonitor используют общий каталог /var/records.</div>
+<p>
+	Проверьте порты:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+lsof -iTCP -sTCP:LISTEN -P | grep janus</pre>
+<p>
+	Ожидаемый результат:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+janus 11064 root 8u IPv4 122113 0t0 TCP *:8188 (LISTEN)
+janus 11064 root 11u IPv4 122115 0t0 TCP localhost:7188 (LISTEN)</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Janus установлен и прослушивает порт HTTP API (8188).</div>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	10.2. Регистрация Janus в ECS</h2>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	Если Janus расположен на другом хосте, замените localhost на его адрес:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+curl -Sf -X POST -H &#39;Content-Type: application/json&#39; \
+  -d &#39;{
+    &quot;url&quot;: &quot;http://localhost:8188/janus/&quot;,
+    &quot;name&quot;: &quot;Janus 1&quot;,
+    &quot;confereeLimit&quot;: 1000,
+    &quot;enabled&quot;: true
+  }&#39; \
+  -u admin:admin http://localhost:8087/admin/media_server</pre>
+<p>
+	Проверьте через health-эндпоинт:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+curl http://localhost:8087/rs/health</pre>
+<p>
+	В ответе ожидается:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+&quot;mediaClusterOk&quot;: true
+&quot;mediaServers&quot;: {&quot;f2d9...&quot;: true}</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Медиасервер Janus зарегистрирован и доступен.</div>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	10.3. Настройка параметров видеоконференций</h2>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<strong style="color:#555;">Шаг 1.</strong> Создайте конфигурационный файл video.yml:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+tee /var/cs/cs_instance/config/video.yml &lt;&lt; &#39;EOF&#39;
+video:
+  enabled: true
+  conference-server-based-member-limit: 34
+  conference-server-based-threshold: 3
+  max-bandwidth: 2000
+  max-reference-width: 1280
+  max-reference-height: 720
+  max-reference-fps: 30
+EOF</pre>
+<p>
+	Описание параметров:</p>
+<table style="border-collapse:collapse; width:100%; margin:12px 0;">
+	<tbody>
+		<tr>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Параметр</th>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Значение</th>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Описание</th>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				enabled</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				true</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Включить видеоконференции</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				conference-server-based-threshold</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				3</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Порог участников для переключения с P2P на медиасервер</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				conference-server-based-member-limit</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				34</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Макс. участников через медиасервер</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				max-bandwidth</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				2000</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Макс. битрейт (кбит/с)</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				max-reference-width / height</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				1280 / 720</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Макс. разрешение видео</td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				max-reference-fps</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				30</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Макс. частота кадров</td>
+		</tr>
+	</tbody>
+</table>
+<p>
+	<strong style="color:#555;">Шаг 2.</strong> Перезапустите CS:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring cs --instance cs_instance service stop
+ring cs --instance cs_instance service start</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Настройки видеоконференций применены.</div>
+<h2 style="font-size:18px; color:#333; margin-top:28px;">
+	10.4. Проверка соединений Janus</h2>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<span style="">Для проверки видеозвонков в информационной базе, зарегистрированной на сервере взаимодействия (п.&nbsp;9.4), должны быть созданы пользователи информационной базы.</span> Инициируйте видеозвонок с 3+ участниками и проверьте соединения:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+netstat -antp | grep -i janus</pre>
+<p>
+	Ожидаемый результат &mdash; наличие ESTABLISHED-соединений:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+tcp 0 0 0.0.0.0:8188      0.0.0.0:*          LISTEN      11064/./janus
+tcp 0 0 127.0.0.1:7188     0.0.0.0:*          LISTEN      11064/./janus
+tcp 0 0 localhost:8188  localhost:59788 ESTABLISHED 11064/./janus</pre>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> Активность соединений с медиасервером Janus подтверждена. Установка и настройка Системы взаимодействия завершена.</div>
+<h1 style="font-size:22px; color:#000; margin-top:36px;">
+	11. Подключение к установленному серверу взаимодействия</h1>
+<p>
+	В том случае, если прикладное решение использует для своей работы сервер взаимодействия, развёрнутый самостоятельно (не сервис &laquo;1С:Диалог&raquo;), то для регистрации информационной базы в сервисе следует использовать не стандартную функцию <strong>Управление системой взаимодействия</strong>, а внешнюю обработку <strong>CollaborationSystemRegister.epf</strong>, которая поставляется вместе с сервером системы взаимодействия.</p>
+<p>
+	Значение поля <strong>Адрес сервера взаимодействия</strong> состоит из трёх частей:</p>
+<ul style="margin:6px 0 6px 20px;">
+	<li>
+		протокол: WS или WSS;</li>
+	<li>
+		адрес сервера;</li>
+	<li>
+		сетевой порт сервера.</li>
+</ul>
+<p>
+	Получить настройки конкретного экземпляра сервера взаимодействия (включая параметры подключения) можно с помощью команды:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring cs --instance &lt;cs_instance&gt; websocket list-params</pre>
+<p>
+	В данном примере:</p>
+<ul style="margin:6px 0 6px 20px;">
+	<li>
+		<code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">&lt;cs_instance&gt;</code> &mdash; название экземпляра сервера взаимодействия.</li>
+</ul>
+<p>
+	Также параметры подключения можно получить в конфигурационном файле <strong>websocket.yml</strong>:</p>
+<ul style="margin:6px 0 6px 20px;">
+	<li>
+		<strong>Протокол</strong> определяется по значению параметра <code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">wss</code>. Если этот параметр установлен в значение <code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">true</code> &mdash; значит используется протокол WSS, в противном случае &mdash; протокол WS.</li>
+	<li>
+		<strong>Адрес сервера</strong> определяется по значению параметра <code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">hostname</code>.</li>
+	<li>
+		<strong>Сетевой порт сервера</strong> определяется по значению параметра <code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">port</code>.</li>
+</ul>
+<p>
+	Конфигурационный файл сервера взаимодействия расположен:</p>
+<table style="border-collapse:collapse; width:100%; margin:12px 0;">
+	<tbody>
+		<tr>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				ОС</th>
+			<th style="border:1px solid #CCC; padding:8px 12px; background-color:#E8E8E8; color:#333; font-weight:bold; text-align:left;">
+				Путь</th>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				Windows</td>
+			<td style="border:1px solid #CCC; padding:8px 12px;">
+				<code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">%ProgramData%\1C\1CE\instances\&lt;cs_instance&gt;\config\</code></td>
+		</tr>
+		<tr>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				Linux</td>
+			<td style="border:1px solid #CCC; padding:8px 12px; background-color:#F5F5F5;">
+				<code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">/var/cs/&lt;cs_instance&gt;/config/</code></td>
+		</tr>
+	</tbody>
+</table>
+<div style="background-color:#FFF; border:1px solid #4CAF50; border-left:5px solid #4CAF50; padding:12px 16px; margin:12px 0; color:#2E7D32;">
+	<strong>Примечание.</strong> Если для экземпляра сервера взаимодействия не изменялись настройки по умолчанию &mdash; конфигурационный файл может отсутствовать.</div>
+<h1 style="font-size:22px; color:#000; margin-top:36px;">
+	12. Подключение использования внешних пользователей</h1>
+<p>
+	Система взаимодействия позволяет использовать внешних пользователей в своих обсуждениях. Для того чтобы включить эту возможность, к серверу взаимодействия необходимо подключить специальный сайт. Внешние пользователи будут использовать сайт как клиент системы взаимодействия. Сайт для внешних пользователей устанавливается с помощью стандартной программы установки соответствующей версии сервера системы взаимодействия.</p>
+<p>
+	После установки администратор должен выполнить определённые настройки, чтобы включить возможность использования внешних пользователей.</p>
+<h3 style="font-size:15px; color:#555; margin-top:20px;">
+	Порядок выполнения</h3>
+<p>
+	<strong style="color:#555;">Шаг 1.</strong> После установки сайта перейдите в каталог сайта и внесите изменения в файл <strong>config.json</strong>. В этом файле необходимо указать адрес сервера взаимодействия, с которым будет взаимодействовать сайт для работы внешних пользователей. Адрес указывается в свойстве <code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">serverURL</code>:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+{
+    &quot;serverURL&quot;: &quot;wss://cs.host.com&quot;
+}</pre>
+<p>
+	В данном примере указан сервер взаимодействия, доступный по протоколу <code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">wss://cs.host.com</code> с использованием стандартного сетевого порта.</p>
+<p>
+	<strong style="color:#555;">Шаг 2.</strong> Настройте веб-сервер, с помощью которого будет осуществляться доступ к сайту. После настройки веб-сервера станет понятен адрес сайта для работы внешних пользователей. Допустим, адрес этого сайта <code style="font-family:'Courier New',Courier,monospace; font-size:13px; background-color:#F0F0F0; padding:2px 5px;">https://host.com</code>.</p>
+<p>
+	<strong style="color:#555;">Шаг 3.</strong> Подключите сайт к системе взаимодействия, выполнив следующую команду:</p>
+<pre style="background-color:#F5F5F5; border:1px solid #DDD; border-left:3px solid #999; padding:10px 14px; margin:8px 0; font-family:'Courier New',Courier,monospace; font-size:13px; line-height:1.5; overflow-x:auto;">
+ring cs --instance cs site set-params --public-url https://host.com</pre>
+<p>
+	В данном примере выполняется подключение экземпляра сервера взаимодействия к ранее развёрнутому сайту для работы внешних пользователей. Указанный в команде адрес сайта будет использоваться в электронном письме, которое отправляется внешнему пользователю.</p>
+<div style="background-color:#FFF; border:1px solid #CCC; border-left:5px solid #888; padding:10px 16px; margin:12px 0;">
+	<strong style="color:#555;">Результат:</strong> После всех выполненных действий сервер взаимодействия станет поддерживать использование внешних пользователей. После перезапуска клиентского приложения, подключённого к данному серверу взаимодействия, в клиентском приложении появится команда <strong>Пригласить внешнего участника</strong> в неконтекстных обсуждениях системы взаимодействия.</div>

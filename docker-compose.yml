@@ -1,0 +1,89 @@
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: pg/Dockerfile
+    environment:
+      POSTGRES_PASSWORD: ${PASSWORD:?Set PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: ${PASSWORD:?Set PASSWORD in .env}
+    ports:
+      - "9000:9000"
+    volumes:
+      - minio-data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      - minio
+    entrypoint: >-
+      sh -ec 'until mc alias set local http://minio:9000 minio "$$MINIO_PASSWORD"; do sleep 2; done;
+      mc mb --ignore-existing local/cs-bucket'
+    environment:
+      MINIO_PASSWORD: ${PASSWORD:?Set PASSWORD in .env}
+
+  ecs:
+    build:
+      context: .
+      dockerfile: ecs/Dockerfile
+    environment:
+      DB_PASSWORD: ${PASSWORD:?Set PASSWORD in .env}
+      HOST_IP: ${HOST_IP:?Set HOST_IP in .env}
+    depends_on:
+      - postgres
+    ports:
+      - "8086:8086"
+      - "8087:8087"
+    volumes:
+      - ecs-data:/var/cs
+
+  janus:
+    build:
+      context: .
+      dockerfile: janus/Dockerfile
+    environment:
+      HOST_IP: ${HOST_IP:?Set HOST_IP in .env}
+    ports:
+      - "8188:8188"
+      - "10000-10200:10000-10200/udp"
+    volumes:
+      - janus-records:/var/records
+
+  setup:
+    image: curlimages/curl:latest
+    restart: "no"
+    depends_on:
+      - ecs
+      - janus
+      - minio
+      - minio-init
+    environment:
+      DB_PASSWORD: ${PASSWORD:?Set PASSWORD in .env}
+      HOST_IP: ${HOST_IP:?Set HOST_IP in .env}
+    entrypoint: >-
+      sh -ec 'until curl -fsS http://ecs:8087/rs/health; do sleep 2; done;
+      until curl -fsS http://janus:8188/janus/info; do sleep 2; done;
+      until curl -fsS http://minio:9000/minio/health/live; do sleep 2; done;
+      curl -fsS -u admin:admin -H "Content-Type: application/json" -X POST
+      -d "{\"url\":\"jdbc:postgresql://postgres:5432/cs_db\",\"username\":\"db_user\",\"password\":\"$$DB_PASSWORD\",\"enabled\":true}"
+      http://ecs:8087/admin/bucket_server || true;
+      curl -fsS -u admin:admin -H "Content-Type: application/json" -X POST
+      -d "{\"apiType\":\"AMAZON\",\"storageType\":\"DEFAULT\",\"baseUrl\":\"http://$$HOST_IP:9000\",\"containerUrl\":\"http://$$HOST_IP:9000/cs-bucket\",\"containerName\":\"cs-bucket\",\"region\":\"eu-west-1\",\"accessKeyId\":\"minio\",\"secretKey\":\"$$DB_PASSWORD\",\"signatureVersion\":\"V2\"}"
+      http://ecs:8087/admin/storage || true;
+      curl -fsS -u admin:admin -H "Content-Type: application/json" -X POST
+      -d "{\"url\":\"http://janus:8188/janus/\",\"name\":\"Janus 1\",\"confereeLimit\":1000,\"enabled\":true}"
+      http://ecs:8087/admin/media_server || true'
+
+volumes:
+  postgres-data:
+  minio-data:
+  ecs-data:
+  janus-records:
