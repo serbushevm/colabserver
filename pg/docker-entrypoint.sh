@@ -7,6 +7,7 @@ if [ ! -s "$PGDATA/PG_VERSION" ]; then
   printf '%s' "$POSTGRES_PASSWORD" > "$password_file"
   chown postgres:postgres "$password_file"
   su postgres -s /bin/sh -c "/usr/lib/postgresql/18/bin/initdb -D '$PGDATA' --username=db_user --pwfile='$password_file'"
+  printf '%s\n' 'host cs_db db_user 0.0.0.0/0 scram-sha-256' >> "$PGDATA/pg_hba.conf"
   rm -f "$password_file"
   su postgres -s /bin/sh -c "/usr/lib/postgresql/18/bin/pg_ctl -D '$PGDATA' -o '-c listen_addresses=localhost' -w start"
   su postgres -s /bin/sh -c "/usr/lib/postgresql/18/bin/createdb -U db_user -O db_user cs_db"

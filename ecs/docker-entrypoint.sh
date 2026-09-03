@@ -16,9 +16,9 @@ if [ ! -f /var/cs/.initialized ]; then
   "$RING" hazelcast instance create --dir /var/cs/hc_instance --owner hc_user
   "$RING" elasticsearch instance create --dir /var/cs/es_instance --owner es_user
   "$RING" cs instance create --dir /var/cs/cs_instance --owner cs_user
-  "$RING" hazelcast --instance hc_instance service create --username hc_user --java-home "$JAVA_HOME" --stopped
-  "$RING" elasticsearch --instance es_instance service create --username es_user --java-home "$JAVA_HOME" --stopped
-  "$RING" cs --instance cs_instance service create --username cs_user --java-home "$JAVA_HOME" --stopped
+  "$RING" hazelcast --instance hc_instance service create --init-system sysv --username hc_user --java-home "$JAVA_HOME" --stopped
+  "$RING" elasticsearch --instance es_instance service create --init-system sysv --username es_user --java-home "$JAVA_HOME" --stopped
+  "$RING" cs --instance cs_instance service create --init-system sysv --username cs_user --java-home "$JAVA_HOME" --stopped
   "$RING" cs --instance cs_instance jdbc pools --name common set-params --url 'jdbc:postgresql://postgres:5432/cs_db?currentSchema=public'
   "$RING" cs --instance cs_instance jdbc pools --name common set-params --username db_user
   "$RING" cs --instance cs_instance jdbc pools --name common set-params --password "$DB_PASSWORD"
@@ -39,7 +39,7 @@ EOF
   touch /var/cs/.initialized
 fi
 
-"$RING" hazelcast --instance hc_instance service start
-"$RING" elasticsearch --instance es_instance service start
-"$RING" cs --instance cs_instance service start
+"$RING" hazelcast --instance hc_instance service start --init-system sysv
+"$RING" elasticsearch --instance es_instance service start --init-system sysv
+"$RING" cs --instance cs_instance service start --init-system sysv
 exec tail -f /dev/null
