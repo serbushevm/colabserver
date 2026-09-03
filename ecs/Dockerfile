@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/opt/1C/1CE/components/1c-enterprise-ring-0.19.5+12-x86_64:$PATH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      ca-certificates curl gawk procps \
+      ca-certificates curl gawk procps sysvinit-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Both the Java runtime and ECS installer are the supplied distributions.
