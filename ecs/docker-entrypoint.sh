@@ -25,7 +25,7 @@ if [ ! -f /var/cs/.initialized ]; then
   "$RING" cs --instance cs_instance jdbc pools --name privileged set-params --url 'jdbc:postgresql://postgres:5432/cs_db?currentSchema=public'
   "$RING" cs --instance cs_instance jdbc pools --name privileged set-params --username db_user
   "$RING" cs --instance cs_instance jdbc pools --name privileged set-params --password "$DB_PASSWORD"
-  "$RING" cs --instance cs_instance websocket set-params --hostname "$HOST_IP" --port 8086
+  "$RING" cs --instance cs_instance websocket set-params --hostname 0.0.0.0 --port 8086
   cat > /var/cs/cs_instance/config/video.yml <<'EOF'
 video:
   enabled: true

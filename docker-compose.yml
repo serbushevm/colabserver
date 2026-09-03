@@ -60,6 +60,7 @@ services:
   setup:
     image: curlimages/curl:latest
     restart: "no"
+    network_mode: "service:ecs"
     depends_on:
       - ecs
       - janus
@@ -69,18 +70,18 @@ services:
       DB_PASSWORD: ${PASSWORD:?Set PASSWORD in .env}
       HOST_IP: ${HOST_IP:?Set HOST_IP in .env}
     entrypoint: >-
-      sh -ec 'until curl -fsS http://ecs:8087/rs/health; do sleep 2; done;
+      sh -ec 'until curl -fsS http://localhost:8087/rs/health; do sleep 2; done;
       until curl -fsS http://janus:8188/janus/info; do sleep 2; done;
       until curl -fsS http://minio:9000/minio/health/live; do sleep 2; done;
       curl -fsS -u admin:admin -H "Content-Type: application/json" -X POST
       -d "{\"url\":\"jdbc:postgresql://postgres:5432/cs_db\",\"username\":\"db_user\",\"password\":\"$$DB_PASSWORD\",\"enabled\":true}"
-      http://ecs:8087/admin/bucket_server || true;
+      http://localhost:8087/admin/bucket_server || true;
       curl -fsS -u admin:admin -H "Content-Type: application/json" -X POST
-      -d "{\"apiType\":\"AMAZON\",\"storageType\":\"DEFAULT\",\"baseUrl\":\"http://$$HOST_IP:9000\",\"containerUrl\":\"http://$$HOST_IP:9000/cs-bucket\",\"containerName\":\"cs-bucket\",\"region\":\"eu-west-1\",\"accessKeyId\":\"minio\",\"secretKey\":\"$$DB_PASSWORD\",\"signatureVersion\":\"V2\"}"
-      http://ecs:8087/admin/storage || true;
+      -d "{\"apiType\":\"AMAZON\",\"storageType\":\"DEFAULT\",\"baseUrl\":\"http://$$HOST_IP:9000\",\"containerUrl\":\"http://$$HOST_IP:9000/cs-bucket\",\"containerName\":\"cs-bucket\",\"region\":\"eu-west-1\",\"accessKeyId\":\"minio\",\"secretKey\":\"$$DB_PASSWORD\",\"signatureVersion\":\"V2\",\"uploadLimit\":52428800,\"downloadLimit\":52428800}"
+      http://localhost:8087/admin/storage_server || true;
       curl -fsS -u admin:admin -H "Content-Type: application/json" -X POST
       -d "{\"url\":\"http://janus:8188/janus/\",\"name\":\"Janus 1\",\"confereeLimit\":1000,\"enabled\":true}"
-      http://ecs:8087/admin/media_server || true'
+      http://localhost:8087/admin/media_server || true'
 
 volumes:
   postgres-data:
