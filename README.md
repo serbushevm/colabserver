@@ -1,7 +1,8 @@
 # Тестовый Docker-стенд ECS + Janus
 
 1. Скопируйте `.env.example` в `.env` и при необходимости измените пароль.
-2. Запустите `docker compose up --build`.
+2. sudo mkdir -p /opt/colab-data/{postgres,minio,ecs,janus-records}
+3. Запустите `docker compose up --build`.
 
 Тестовый адрес сервера взаимодействия: `ws://192.168.1.110:8086`.
 
