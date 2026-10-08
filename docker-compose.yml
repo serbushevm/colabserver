@@ -9,7 +9,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
 
   minio:
-    image: quay.io/minio/minio:latest
+    image: pgsty/minio:latest
     command: server /data --console-address :9001
     environment:
       MINIO_ROOT_USER: minio
@@ -20,7 +20,7 @@ services:
       - minio-data:/data
 
   minio-init:
-    image: quay.io/minio/mc:latest
+    image: pgsty/mc:latest
     restart: "no"
     depends_on:
       - minio
