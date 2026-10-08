@@ -85,6 +85,26 @@ services:
 
 volumes:
   postgres-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/colab-data/postgres
   minio-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/colab-data/minio
   ecs-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/colab-data/ecs
   janus-records:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/colab-data/janus-records
